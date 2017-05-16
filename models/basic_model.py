@@ -55,4 +55,40 @@ def rnn_cell(rnn_input, state):
 		W = tf.get_variable('W', [num_classes + state_size, state_size])
 		b = tf.get_variable('b', [state_size], initializer = tf.constant_initializer(0.0))
 	return tf.tanh(tf.matmul(tf.concat([rnn_input, state]), W) + b)
-	
+
+'''
+adding rnn_cells to graph
+this is a simplified version of the static_rnn function from tensorflow's api, see
+https://github.com/tensorflow/blob/master/tensorflow/contrib/rnn/python/ops/core_rnn.py#L41
+Note: in practice, using dynamic_rnn is a better choice that the static_rnn:
+https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/ops/rnn.py#L390
+'''
+
+state = init_state
+rnn_outputs = []
+for rnn_input in rnn_inputs:
+	state = rnn_cell(rnn_input, state)
+	rnn_outputs.append(state)
+final_state = rnn_outputs[-1]
+
+'''
+predictions, loss, training step
+losses is similar to the sequence_loss
+function from tensorflow's api, except that here we are using a list of 2D tensors, instead of a 3D tensor.see
+https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/seq2seq/python/ops/loss.py
+'''
+
+#logits and preedictions
+with tf.variable_scope('softmax'):
+	w = tf.get_variable('W', [state_size, num_classes])
+	b = tf.get_variable('b', [num_classes], initializer = tf.constant_initializer(0.0))
+logits = [tf.matmul(rnn_outputs, W) + b for rnn_outputs in rnn_outputs]
+predictions = [tf.nn.softmax(logit) for logit in logits]
+
+# turn our y placeholder into a list of labels
+y_as_list = tf.unstack(y, num = num_steps, axis = 1)
+
+losses = [tf.nn.sparse_softmax_cross_entropy_with_logits(labels = label, logits = logit) for
+logit, label in zip(logits, y_as_list) ]
+total_loss = tf.reduce_mean(losses)
+train_step = tf.train.AdagradOptimizer(learning_rate).minimize(total_loss)
