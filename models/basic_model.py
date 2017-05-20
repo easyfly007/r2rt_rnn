@@ -6,6 +6,9 @@ import numpy as np
 print('expected cross entroy loss if the model:')
 print('- learns neither dependency: ', -(0.625*np.log(0.625) + 0.375*np.log(0.375)))
 
+# if we cannot find the dependecncy, then it will only obbserved that the 1 probability is 
+# (0.5 + 0.25 + 0.75 + 1) / 4 = 0.625, and the 0 probability is 0.375 
+
 # learns first dependency only => 0.51916669970720941
 print(' - learns first dependency: ', 
 	-0.5*(0.875*np.log(0.875) + 0.125*np.log(0.125))
@@ -104,7 +107,7 @@ def train_network(num_epochs, num_steps, state_size = 4, verbose = True):
 			if verbose:
 				print('\nEPOCH', idx)
 			for step, (X, Y) in enumerate(epoch):
-				tr_losses, training_loss_, training_state, _ =
+				# tr_losses, training_loss_, training_state, _ =
 				sess.run([losses, total_loss, final_state, train_step], 
 					feed_dict = {x:X, y:Y, init_state:training_state})
 				training_loss += training_loss_

@@ -67,3 +67,5 @@ def gen_epochs(n, num_steps):
 	for i in range(n):
 		yield gen_batch(gen_data(), batch_size, num_steps)
 		
+
+# for each epoch, we will generate different data and then divide them into different batches for training
