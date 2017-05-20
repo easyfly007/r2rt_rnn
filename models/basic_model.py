@@ -92,3 +92,29 @@ losses = [tf.nn.sparse_softmax_cross_entropy_with_logits(labels = label, logits 
 logit, label in zip(logits, y_as_list) ]
 total_loss = tf.reduce_mean(losses)
 train_step = tf.train.AdagradOptimizer(learning_rate).minimize(total_loss)
+
+
+def train_network(num_epochs, num_steps, state_size = 4, verbose = True):
+	with tf.Session() as sess:
+		sess.run(tf.global_variables_initializer())
+		training_losses = []
+		for idx, epoch in enumerate(gen_epochs(num_epochs, num_steps)):
+			training_loss = 0
+			training_state = np.zeros((batch_size, state_size))
+			if verbose:
+				print('\nEPOCH', idx)
+			for step, (X, Y) in enumerate(epoch):
+				tr_losses, training_loss_, training_state, _ =
+				sess.run([losses, total_loss, final_state, train_step], 
+					feed_dict = {x:X, y:Y, init_state:training_state})
+				training_loss += training_loss_
+				if step % 100 == 0 and step >0:
+					if verbose:
+						print('average loss at step', step, 'for last 250 steps:', training_loss/100)
+					training_losses.apend(training_loss / 100)
+					training_loss = 0
+	return training_losses
+
+training_losses = train_network(1, num_steps)
+# plt.plot(training_losses)
+
